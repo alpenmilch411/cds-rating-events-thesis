@@ -1,0 +1,22 @@
+
+# build / system
+# critique stays private
+# environments
+# raw original thesis source material kept locally only
+# typst cache
+*.docx
+*.log
+*.pyc
+*.zip
+.DS_Store
+.ipynb_checkpoints/
+.typst-cache/
+.venv/
+.~lock*
+MA_docx_extracted/
+Masterarbeit/
+__pycache__/
+output/critique.pdf
+thesis/critique.typ
+thesis_text.txt
+~$*
