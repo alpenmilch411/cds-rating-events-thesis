@@ -168,18 +168,25 @@ def event_reaction_regression(panel: pd.DataFrame, agency: str | None, sign: str
     }
 
 
-def spillover_regressions(cds: pd.DataFrame, events: pd.DataFrame) -> dict:
+def spillover_regressions(cds: pd.DataFrame, events: pd.DataFrame, event_panel: pd.DataFrame | None = None) -> dict:
     """Spill-over regression on non-event countries.
 
     For every (event_country, event_date) pair we collect the percentage
     two-day spread change of every other sovereign that did NOT have an event
     in [t-1, t+1]. Sovereigns with a t-1 spread below 25 bps are excluded for
     that observation to avoid the small-denominator bias.
+
+    Event dates come from `event_panel` when provided; this guarantees that
+    events announced on a non-trading day use the forward-snapped trading
+    date instead of being silently dropped by an exact-date lookup.
     """
     cds = cds.copy()
     cds["Date_d"] = cds["Date"].dt.normalize()
 
-    events = events.copy()
+    if event_panel is not None and len(event_panel) > 0:
+        events = event_panel[events.columns.tolist()].copy()
+    else:
+        events = events.copy()
     events["Date_d"] = events["Date"].dt.normalize()
 
     # Day-level event aggregation: same-day positive and negative event masses.
@@ -508,7 +515,9 @@ def main():
     results["table_logit"] = predict_logit(panel, cds)
 
     # ----- Section 4.4: spillovers ----------------------------------------
-    results["table_spillover"] = spillover_regressions(cds, events)
+    # Pass the snapped-date event_panel so non-trading-day events do not get
+    # silently dropped when looking up surrounding spreads.
+    results["table_spillover"] = spillover_regressions(cds, events, event_panel=panel)
 
     # ----- summary stats for the abstract -----------------------------------
     results["summary"] = {
