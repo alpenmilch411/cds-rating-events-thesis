@@ -4,7 +4,7 @@
 
 This repository is a personal redo of the empirical study I wrote in 2019 as my master's thesis. The original was a competent first empirical study but had several methodological choices I would not make today: an equally-weighted market benchmark that contained the event country, naively-iid panel standard errors, no regime split for the European debt crisis, and a spillover specification that was contaminated by very tight-spread sovereigns in the post-2014 sub-period. This repo re-runs the analysis on the same data with corrected methods and re-renders the thesis from scratch.
 
-The output document, [`output/thesis.pdf`](output/thesis.pdf), is the result. It is not graded by, submitted to, or otherwise endorsed by any university — it is a personal exercise in reproducing my own earlier work to the standard I would hold myself to today.
+The output document, [`output/thesis.pdf`](output/thesis.pdf) (PDF, polished typeset), or [`thesis/thesis.md`](thesis/thesis.md) for the same content rendered inline on GitHub. They are the result. It is not graded by, submitted to, or otherwise endorsed by any university — it is a personal exercise in reproducing my own earlier work to the standard I would hold myself to today.
 
 ## What the thesis investigates
 
@@ -18,11 +18,11 @@ The dataset is 263 rating events (147 S&P, 116 Moody's; 137 positive, 126 negati
 
 ## Headline findings
 
-- **Negative events move CDS spreads more than positive events**, by roughly a factor of five in mean magnitude. Average two-day adjusted spread reaction to a negative event is +13.7 bps (median +2.1 bps), versus −2.6 bps (median −0.9 bps) for positive events.
+- **Negative events move CDS spreads more than positive events**, by roughly a factor of five in mean magnitude. Average two-day adjusted spread reaction to a negative event is +16.1 bps (median +2.1 bps), versus −3.8 bps (median −1.4 bps) for positive events.
 - **The asymmetric reaction is concentrated in two sub-samples** that the original thesis did not separate:
-  - **EMU sovereigns** react roughly three times more strongly to negative events than non-EMU sovereigns (+16.9 bps vs +5.6 bps).
-  - **Pre-Draghi** (before 2012-07-26) the negative-event reaction is +17.6 bps; **post-Draghi** it falls to +6.3 bps and is no longer statistically distinguishable from zero. Most of the asymmetric reaction is a feature of the European debt crisis, not a structural feature of European CDS markets.
-- **Once standard errors are two-way clustered by sovereign and trading day**, the pooled negative-event panel coefficient is no longer statistically significant (−9.1 bps, p = 0.21). Only the S&P negative-event coefficient retains marginal significance (p = 0.06). The original naive-iid version of this regression delivered comfortably significant pooled results.
+  - **EMU sovereigns** react roughly three times more strongly to negative events than non-EMU sovereigns (+19.7 bps vs +5.9 bps).
+  - **Pre-Draghi** (before 2012-07-26) the negative-event reaction is +20.8 bps; **post-Draghi** it falls to +6.8 bps and is no longer statistically distinguishable from zero. Most of the asymmetric reaction is a feature of the European debt crisis, not a structural feature of European CDS markets.
+- **Once standard errors are two-way clustered by sovereign and trading day**, the pooled negative-event panel coefficient is no longer statistically significant (−12.9 bps, p = 0.14). Only the S&P negative-event coefficient retains marginal significance (p = 0.08). The original naive-iid version of this regression delivered comfortably significant pooled results.
 - **CDS premiums do not predict negative rating events**; they predict positive events only marginally and only at the two-month horizon. The McFadden pseudo-R² of the best logistic specification is below 1%.
 - **Spillover effects exist for negative rating events between EMU sovereigns of investment-grade quality**, and not otherwise. The "positive spillover from positive events" finding from the original thesis was an artifact of percentage-change scaling on very tight-spread sovereigns; once observations with prior-day spreads below 25 bps are dropped, the effect disappears.
 
