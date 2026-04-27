@@ -268,7 +268,7 @@ def fig_regime_split():
     ax.scatter([0, 1], [pre_mean, post_mean], color=PAL["ink"], s=80, zorder=4, marker="D")
     ax.text(0, pre_mean + 18, f"{pre_mean:+.1f} bps", ha="center", fontsize=9, color=PAL["ink"], weight="bold")
     ax.text(1, post_mean + 18, f"{post_mean:+.1f} bps", ha="center", fontsize=9, color=PAL["ink"], weight="bold")
-    ax.set_title("Negative-event reaction collapses from +17.6 bps to +6.3 bps after the ECB's July 2012 commitment",
+    ax.set_title("Negative-event reaction collapses from +20.8 bps to +6.8 bps after the ECB's July 2012 commitment",
                  loc="left", fontsize=10, wrap=True)
     fig.tight_layout()
     save(fig, "f8_regime_split")
