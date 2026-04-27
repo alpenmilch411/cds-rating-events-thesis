@@ -129,22 +129,15 @@ def load_cds() -> pd.DataFrame:
     long = long[(long["Date"] >= START) & (long["Date"] <= END)]
     long = long.sort_values(["Sovereign", "Date"]).reset_index(drop=True)
 
-    # Block-stale flag: a quote is "stale" if it has been identical for at
-    # least 5 consecutive trading days. Greece 2012-2017 (frozen at 14,909.36)
-    # is the canonical example. We set those rows to NaN rather than dropping.
+    # Block-stale flag: a quote is "stale" if it sits inside a block of at
+    # least 5 consecutive identical values. Greece 2012-2017 (frozen at
+    # 14,909.36) is the canonical example. Every row in such a block is set
+    # to NaN rather than dropped. Earlier versions of this filter only marked
+    # the tail of the run; the implementation below labels the whole block.
     def stale_block_mask(s: pd.Series, run: int = 5) -> pd.Series:
-        same_as_prev = s.eq(s.shift())
-        run_lengths = (
-            same_as_prev.groupby((~same_as_prev).cumsum()).cumcount() + 1
-        ) * same_as_prev
-        # Mark all rows in any run of >= run consecutive identical values.
-        flag = pd.Series(False, index=s.index)
-        in_run = run_lengths >= run
-        # Extend mask backward so the first identical value also gets flagged
-        # (the run-length starts on the second identical day).
-        extended = in_run | in_run.shift(-1).fillna(False).infer_objects(copy=False)
-        flag.loc[extended] = True
-        return flag
+        block = (s != s.shift()).cumsum()
+        sizes = s.groupby(block).transform("size")
+        return sizes >= run
 
     long["stale"] = (
         long.groupby("Sovereign")["Spread"]
@@ -380,16 +373,43 @@ def build_event_panel() -> pd.DataFrame:
     merged["InvGrade_prior"] = (merged["rating_prev"] >= 12).astype(int)
 
     # Confounded-event flag: any other rating event by either agency on the
-    # same country within +/- 1 trading day.
+    # same country within +/- 1 *trading* day. Calendar-day adjacency would
+    # miss Friday/Monday pairs.
+    trading_days = (
+        cds.sort_values(["Sovereign", "Date"])
+        .groupby("Sovereign")["Date"]
+        .apply(lambda s: pd.DatetimeIndex(sorted(s.unique())))
+        .to_dict()
+    )
+
+    def _trading_pos(sov: str, d: pd.Timestamp) -> int | None:
+        idx = trading_days.get(sov)
+        if idx is None or len(idx) == 0:
+            return None
+        pos = idx.get_indexer([d], method="bfill")[0]
+        return int(pos) if pos != -1 else None
+
     e2 = events.copy()
-    e2["Date_d"] = e2["Date"].dt.normalize()
-    merged["Date_d"] = merged["Date"].dt.normalize()
+    e2["td_pos"] = [_trading_pos(s, d) for s, d in zip(e2["Sovereign"], e2["Date"])]
+    merged["td_pos"] = [_trading_pos(s, d) for s, d in zip(merged["Sovereign"], merged["Date"])]
+    by_sov_pos: dict[tuple[str, int], int] = {}
+    for sov, pos in zip(e2["Sovereign"], e2["td_pos"]):
+        if pos is None:
+            continue
+        by_sov_pos[(sov, pos)] = by_sov_pos.get((sov, pos), 0) + 1
     confound = []
-    for _, row in merged.iterrows():
-        d, sov = row["Date_d"], row["Sovereign"]
-        same_country = e2[(e2["Sovereign"] == sov) & (e2["Date_d"].between(d - pd.Timedelta(days=1), d + pd.Timedelta(days=1)))]
-        confound.append(len(same_country) > 1)
+    for sov, pos in zip(merged["Sovereign"], merged["td_pos"]):
+        if pos is None:
+            confound.append(False)
+            continue
+        n = (
+            by_sov_pos.get((sov, pos - 1), 0)
+            + by_sov_pos.get((sov, pos), 0)
+            + by_sov_pos.get((sov, pos + 1), 0)
+        )
+        confound.append(n > 1)
     merged["Confounded_self"] = confound
+    merged = merged.drop(columns=["td_pos"])
 
     # Crisis / post-Draghi regime split: 2012-07-26 = "whatever it takes".
     merged["PostDraghi"] = (merged["Date"] >= pd.Timestamp("2012-07-26")).astype(int)
